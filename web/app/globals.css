@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --red: #FF000F;
+  --black: #000000;
+  --white: #FFFFFF;
+  --gray-50: #F9F9F9;
+  --gray-100: #F0F0F0;
+  --gray-300: #CCCCCC;
+  --gray-600: #666666;
+  --gray-900: #111111;
+}
+
+@theme inline {
+  --color-red: #FF000F;
+  --color-background: #FFFFFF;
+  --color-foreground: #000000;
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--white);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+}
