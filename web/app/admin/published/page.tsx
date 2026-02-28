@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { deleteEntry } from "../actions";
 import type { Postmortem } from "@/lib/types";
@@ -6,11 +5,12 @@ import type { Postmortem } from "@/lib/types";
 export const metadata: Metadata = { title: "Published — Admin" };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
-async function getPublished(token: string): Promise<Postmortem[]> {
+async function getPublished(): Promise<Postmortem[]> {
   try {
     const res = await fetch(`${API_URL}/postmortems?status=published&limit=100`, {
-      headers: { "x-admin-secret": token },
+      headers: { "x-admin-secret": ADMIN_SECRET },
       cache: "no-store",
     });
     return res.ok ? res.json() : [];
@@ -25,9 +25,7 @@ function formatDate(iso: string | null) {
 }
 
 export default async function PublishedPage() {
-  const jar = await cookies();
-  const token = jar.get("admin_token")?.value ?? "";
-  const entries = await getPublished(token);
+  const entries = await getPublished();
 
   return (
     <div>

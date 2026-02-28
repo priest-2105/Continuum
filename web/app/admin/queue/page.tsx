@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { publishEntry, rejectEntry, deleteEntry } from "../actions";
 import type { Postmortem } from "@/lib/types";
@@ -6,11 +5,12 @@ import type { Postmortem } from "@/lib/types";
 export const metadata: Metadata = { title: "Review Queue — Admin" };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
-async function getQueue(token: string): Promise<Postmortem[]> {
+async function getQueue(): Promise<Postmortem[]> {
   try {
     const res = await fetch(`${API_URL}/admin/queue`, {
-      headers: { "x-admin-secret": token },
+      headers: { "x-admin-secret": ADMIN_SECRET },
       cache: "no-store",
     });
     return res.ok ? res.json() : [];
@@ -25,9 +25,7 @@ function formatDate(iso: string | null) {
 }
 
 export default async function QueuePage() {
-  const jar = await cookies();
-  const token = jar.get("admin_token")?.value ?? "";
-  const queue = await getQueue(token);
+  const queue = await getQueue();
 
   return (
     <div>

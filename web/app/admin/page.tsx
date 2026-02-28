@@ -1,19 +1,19 @@
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dashboard — Admin" };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
-async function getStats(token: string) {
+async function getStats() {
   try {
     const [published, pending] = await Promise.all([
       fetch(`${API_URL}/postmortems?status=published&limit=100`, {
-        headers: { "x-admin-secret": token },
+        headers: { "x-admin-secret": ADMIN_SECRET },
         cache: "no-store",
       }).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_URL}/admin/queue`, {
-        headers: { "x-admin-secret": token },
+        headers: { "x-admin-secret": ADMIN_SECRET },
         cache: "no-store",
       }).then((r) => (r.ok ? r.json() : [])),
     ]);
@@ -24,9 +24,7 @@ async function getStats(token: string) {
 }
 
 export default async function AdminDashboard() {
-  const jar = await cookies();
-  const token = jar.get("admin_token")?.value ?? "";
-  const { published, pending } = await getStats(token);
+  const { published, pending } = await getStats();
 
   const companies = [...new Set([...published, ...pending].map((p: { company: string }) => p.company))];
 
