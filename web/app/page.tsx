@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
 import PostmortemCard from "@/components/PostmortemCard";
 import EmptyState from "@/components/EmptyState";
 import { getPostmortems } from "@/lib/api";
@@ -8,8 +7,7 @@ export default async function HomePage() {
   const recent = await getPostmortems({ limit: 6 });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fff" }}>
-      <Navbar />
+    <div style={{ background: "#fff" }}>
 
       {/* Hero */}
       <section style={{ background: "#000", padding: "80px 24px 72px" }}>
@@ -134,26 +132,6 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: "1px solid #eee",
-          padding: "24px",
-          textAlign: "center",
-        }}
-      >
-        <p
-          style={{
-            fontSize: 11,
-            color: "#999",
-            margin: 0,
-            fontFamily: "var(--font-jetbrains), monospace",
-            letterSpacing: "0.08em",
-          }}
-        >
-          CONTINUUM — Industry postmortems, preserved as written.
-        </p>
-      </footer>
     </div>
   );
 }

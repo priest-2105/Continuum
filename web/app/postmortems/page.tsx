@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import PostmortemCard from "@/components/PostmortemCard";
 import EmptyState from "@/components/EmptyState";
 import { getPostmortems, getCompanies } from "@/lib/api";
@@ -15,9 +16,8 @@ export default async function BrowsePage({ searchParams }: Props) {
   ]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fff" }}>
-      <Navbar />
-
+    <div style={{ background: "#fff" }}>
+   
       {/* Page header */}
       <div style={{ borderBottom: "2px solid #000", background: "#fff" }}>
         <div
@@ -123,26 +123,6 @@ export default async function BrowsePage({ searchParams }: Props) {
         </main>
       </div>
 
-      <footer
-        style={{
-          borderTop: "1px solid #eee",
-          padding: "24px",
-          textAlign: "center",
-          marginTop: 64,
-        }}
-      >
-        <p
-          style={{
-            fontSize: 11,
-            color: "#999",
-            margin: 0,
-            fontFamily: "var(--font-jetbrains), monospace",
-            letterSpacing: "0.08em",
-          }}
-        >
-          CONTINUUM — Industry postmortems, preserved as written.
-        </p>
-      </footer>
     </div>
   );
 }

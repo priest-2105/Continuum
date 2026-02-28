@@ -4,7 +4,8 @@
       "Bash(gh repo:)",
       "Bash(gh repo:*)",
       "Bash(gh api:*)",
-      "Bash(npx create-next-app@latest:*)"
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

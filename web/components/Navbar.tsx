@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -9,28 +10,12 @@ export default function Navbar() {
       >
         {/* Wordmark */}
         <Link href="/" className="flex items-center gap-2 no-underline">
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#FF000F",
-              display: "inline-block",
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: 15,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              fontFamily: "inherit",
-            }}
-          >
-            Continuum
-          </span>
+        <Image
+        src="/continuum-logo-dark.svg"
+        alt=""
+        height={200}
+        width={400}
+        />
         </Link>
 
         {/* Nav links */}
