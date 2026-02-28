@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const CREDITS = [
@@ -62,27 +63,12 @@ export default function Footer() {
             href="/"
             style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}
           >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#FF000F",
-                display: "inline-block",
-                flexShrink: 0,
-              }}
+           <Image
+            src="/continuum-logo-dark.svg"
+            alt=""
+            height={60}
+            width={200}
             />
-            <span
-              style={{
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: 14,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-              }}
-            >
-              Continuum
-            </span>
           </Link>
           <p
             style={{
@@ -219,38 +205,93 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div
-        style={{
-          borderTop: "1px solid #111",
-          padding: "16px 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          maxWidth: 1200,
-          margin: "0 auto",
-        }}
-      >
-        <span
+      {/* Creator strip */}
+      <div style={{ borderTop: "1px solid #111" }}>
+        <div
           style={{
-            fontSize: 11,
-            color: "#333",
-            fontFamily: "var(--font-jetbrains), monospace",
-            letterSpacing: "0.08em",
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "20px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          © {new Date().getFullYear()} Continuum
-        </span>
-        <span
-          style={{
-            fontSize: 11,
-            color: "#333",
-            fontFamily: "var(--font-jetbrains), monospace",
-            letterSpacing: "0.06em",
-          }}
-        >
-          Inspired by git-scraping · Simon Willison
-        </span>
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#444",
+                margin: "0 0 8px",
+                fontFamily: "'JetBrains Mono Variable', monospace",
+              }}
+            >
+              Creator
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 800,
+                  color: "#fff",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Fawaz Bailey
+              </span>
+              <div style={{ display: "flex", gap: 10 }}>
+                <a
+                  href="https://github.com/priest-2105"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 12,
+                    color: "#FF000F",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    border: "1px solid #FF000F",
+                    padding: "3px 10px",
+                    fontFamily: "'JetBrains Mono Variable', monospace",
+                  }}
+                >
+                  GitHub ↗
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/fawazbailey/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 12,
+                    color: "#FF000F",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    border: "1px solid #FF000F",
+                    padding: "3px 10px",
+                    fontFamily: "'JetBrains Mono Variable', monospace",
+                  }}
+                >
+                  LinkedIn ↗
+                </a>
+              </div>
+            </div>
+          </div>
+          <span
+            style={{
+              fontSize: 11,
+              color: "#333",
+              fontFamily: "'JetBrains Mono Variable', monospace",
+              letterSpacing: "0.06em",
+            }}
+          >
+            © {new Date().getFullYear()} Continuum
+          </span>
+        </div>
       </div>
     </footer>
   );

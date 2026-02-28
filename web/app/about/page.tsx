@@ -62,6 +62,16 @@ const SOURCES = [
 
 const CREDITS = [
   {
+    name: "Fawaz Bailey — Creator",
+    url: "https://github.com/priest-2105",
+    contribution:
+      "Conceived, designed, and built Continuum — from the data collection architecture and AI enrichment layer to the brand identity and frontend.",
+    links: [
+      { label: "GitHub", url: "https://github.com/priest-2105" },
+      { label: "LinkedIn", url: "https://www.linkedin.com/in/fawazbailey/" },
+    ],
+  },
+  {
     name: "Simon Willison",
     url: "https://simonwillison.net/2020/Oct/9/git-scraping/",
     contribution:

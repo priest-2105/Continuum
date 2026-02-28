@@ -13,8 +13,8 @@ export default function Navbar() {
         <Image
         src="/continuum-logo-dark.svg"
         alt=""
-        height={200}
-        width={400}
+        height={60}
+        width={200}
         />
         </Link>
 

@@ -1,5 +1,3 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import PostmortemCard from "@/components/PostmortemCard";
 import EmptyState from "@/components/EmptyState";
 import { getPostmortems, getCompanies } from "@/lib/api";

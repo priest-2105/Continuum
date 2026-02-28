@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import CompanyBadge from "@/components/CompanyBadge";
 import SeverityBadge from "@/components/SeverityBadge";
 import { getPostmortem } from "@/lib/api";

@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { JetBrains_Mono } from "next/font/google";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Continuum",
-  description: "A centralized repository of software postmortems from across the industry.",
+  title: {
+    default: "Continuum",
+    template: "%s — Continuum",
+  },
+  description: "A centralized repository of software postmortems from across the industry — preserved as written.",
+  icons: {
+    icon: "/continuum-favicon.svg",
+    shortcut: "/continuum-favicon.svg",
+  },
+  openGraph: {
+    title: "Continuum",
+    description: "Industry postmortems, preserved as written.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${jetbrains.variable} font-sans antialiased`}>
+      <body className="antialiased" style={{ fontFamily: "'Inter Variable', Inter, system-ui, sans-serif" }}>
         <Navbar />
         <div className="min-h-screen">
         {children}
