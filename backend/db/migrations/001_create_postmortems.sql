@@ -12,7 +12,7 @@ create table if not exists postmortems (
   root_cause_category text,
   ai_summary     text,
   tags           text[] default '{}',
-  status         text not null default 'pending',  -- pending | published | rejected
+  status         text not null default 'pending', 
   created_at     timestamptz default now()
 );
 

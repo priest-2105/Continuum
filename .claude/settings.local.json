@@ -10,7 +10,18 @@
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(rm:*)",
-      "Bash(pip:*)"
+      "Bash(pip:*)",
+      "Bash(python:*)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(node:*)",
+      "Bash(.venv/Scripts/uvicorn app.main:app:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(.venv/Scripts/python:*)",
+      "Bash(.venv/Scripts/pip show:*)",
+      "Bash(supabase:*)",
+      "Bash(psql:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

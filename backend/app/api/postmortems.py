@@ -12,18 +12,18 @@ async def list_postmortems(
     limit: int = Query(default=20, le=100),
     offset: int = 0,
 ):
-    db = get_client()
+    db = await get_client()
     query = db.table("postmortems").select("*").eq("status", status)
     if company:
         query = query.eq("company", company)
-    result = query.order("published_at", desc=True).range(offset, offset + limit - 1).execute()
+    result = await query.order("published_at", desc=True).range(offset, offset + limit - 1).execute()
     return result.data
 
 
 @router.get("/{id}")
 async def get_postmortem(id: str):
-    db = get_client()
-    result = db.table("postmortems").select("*").eq("id", id).single().execute()
+    db = await get_client()
+    result = await db.table("postmortems").select("*").eq("id", id).single().execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Not found")
     return result.data
