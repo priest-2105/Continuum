@@ -2,15 +2,14 @@ import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: {
     default: "Continuum",
     template: "%s — Continuum",
   },
-  description: "A centralized repository of software postmortems from across the industry — preserved as written.",
+  description:
+    "A centralized repository of software postmortems from across the industry — preserved as written.",
   icons: {
     icon: "/continuum-favicon.svg",
     shortcut: "/continuum-favicon.svg",
@@ -24,17 +23,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="antialiased" style={{ fontFamily: "'Inter Variable', Inter, system-ui, sans-serif" }}>
-        <Navbar />
-        <div className="min-h-screen">
+      <body
+        className="antialiased"
+        style={{ fontFamily: "'Inter Variable', Inter, system-ui, sans-serif" }}
+      >
         {children}
-        </div>
-        <Footer/>
       </body>
     </html>
   );
