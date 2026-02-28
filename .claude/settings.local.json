@@ -21,7 +21,9 @@
       "Bash(.venv/Scripts/pip show:*)",
       "Bash(supabase:*)",
       "Bash(psql:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(xargs cat:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }
