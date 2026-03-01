@@ -1,6 +1,11 @@
 from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel
 from app.db.supabase import get_client
 from app.core.config import settings
+
+
+class BulkIds(BaseModel):
+    ids: list[str]
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -44,3 +49,19 @@ async def delete_entry(id: str, x_admin_secret: str = Header(...)):
     db = await get_client()
     await db.table("postmortems").delete().eq("id", id).execute()
     return {"deleted": id}
+
+
+@router.post("/bulk-publish")
+async def bulk_publish(body: BulkIds, x_admin_secret: str = Header(...)):
+    require_admin(x_admin_secret)
+    db = await get_client()
+    result = await db.table("postmortems").update({"status": "published"}).in_("id", body.ids).execute()
+    return {"updated": len(result.data)}
+
+
+@router.post("/bulk-reject")
+async def bulk_reject(body: BulkIds, x_admin_secret: str = Header(...)):
+    require_admin(x_admin_secret)
+    db = await get_client()
+    result = await db.table("postmortems").update({"status": "rejected"}).in_("id", body.ids).execute()
+    return {"updated": len(result.data)}

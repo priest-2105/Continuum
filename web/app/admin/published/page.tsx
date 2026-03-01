@@ -9,11 +9,12 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
 async function getPublished(): Promise<Postmortem[]> {
   try {
-    const res = await fetch(`${API_URL}/postmortems?status=published&limit=100`, {
-      headers: { "x-admin-secret": ADMIN_SECRET },
+    const res = await fetch(`${API_URL}/postmortems/?status=published&limit=100`, {
       cache: "no-store",
     });
-    return res.ok ? res.json() : [];
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
   } catch {
     return [];
   }

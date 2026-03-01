@@ -40,13 +40,40 @@ export async function deleteEntry(id: string) {
   revalidatePath("/admin/published");
 }
 
+export async function bulkPublish(ids: string[]) {
+  await assertAdmin();
+  await fetch(`${API_URL}/admin/bulk-publish`, {
+    method: "POST",
+    headers: { "x-admin-secret": ADMIN_SECRET, "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  revalidatePath("/admin/queue");
+  revalidatePath("/admin/published");
+}
+
+export async function bulkReject(ids: string[]) {
+  await assertAdmin();
+  await fetch(`${API_URL}/admin/bulk-reject`, {
+    method: "POST",
+    headers: { "x-admin-secret": ADMIN_SECRET, "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  revalidatePath("/admin/queue");
+}
+
 export async function createSource(formData: FormData) {
   await assertAdmin();
   const method = formData.get("method") as string;
   const config: Record<string, string> = {};
   if (method === "github_json") {
-    config.repo = formData.get("config_repo") as string;
-    config.file = formData.get("config_file") as string;
+    const githubUrl = (formData.get("config_github_url") as string) ?? "";
+    const m = githubUrl.match(/github\.com\/([^/]+\/[^/]+)\/blob\/([^/]+)\/(.+)/);
+    if (!m) throw new Error("Invalid GitHub file URL");
+    config.repo   = m[1];
+    config.branch = m[2];
+    config.file   = m[3];
+    const sinceDate = ((formData.get("config_since_date") as string) ?? "").trim();
+    if (sinceDate) config.since_date = sinceDate.includes("T") ? sinceDate : sinceDate + "T00:00:00Z";
   } else if (method === "rss") {
     config.feed_url = formData.get("config_feed_url") as string;
   } else if (method === "scrape") {

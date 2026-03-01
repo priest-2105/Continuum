@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { deleteSource, syncSource } from "../actions";
+import { deleteSource } from "../actions";
 import AddSourceForm from "./AddSourceForm";
+import SyncButton from "./SyncButton";
 
 export const metadata: Metadata = { title: "Sources — Admin" };
 
@@ -88,7 +89,7 @@ export default async function SourcesPage() {
                 display: "grid",
                 gridTemplateColumns: "1fr auto",
                 gap: 20,
-                alignItems: "center",
+                alignItems: "flex-start",
               }}
             >
               <div>
@@ -116,26 +117,8 @@ export default async function SourcesPage() {
                 </p>
               </div>
 
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                <form action={syncSource.bind(null, src.id)}>
-                  <button
-                    type="submit"
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "1px solid #333",
-                      padding: "7px 14px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      cursor: "pointer",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    Sync
-                  </button>
-                </form>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "flex-start" }}>
+                <SyncButton sourceId={src.id} />
                 <form action={deleteSource.bind(null, src.id)}>
                   <button
                     type="submit"

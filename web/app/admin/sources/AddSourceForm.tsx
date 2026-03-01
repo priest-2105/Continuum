@@ -18,6 +18,17 @@ function slugify(s: string) {
     .replace(/^-|-$/g, "");
 }
 
+interface ParsedGitHub {
+  repo: string;
+  branch: string;
+  file: string;
+}
+
+function parseGitHubUrl(url: string): ParsedGitHub | null {
+  const m = url.match(/github\.com\/([^/]+\/[^/]+)\/blob\/([^/]+)\/(.+)/);
+  return m ? { repo: m[1], branch: m[2], file: m[3] } : null;
+}
+
 export default function AddSourceForm() {
   const [method, setMethod] = useState("github_json");
   const [company, setCompany] = useState("");
@@ -25,6 +36,8 @@ export default function AddSourceForm() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [parsedGitHub, setParsedGitHub] = useState<ParsedGitHub | null>(null);
 
   function handleCompanyChange(val: string) {
     setCompany(val);
@@ -43,6 +56,8 @@ export default function AddSourceForm() {
         setSlug("");
         setSlugTouched(false);
         setMethod("github_json");
+        setGithubUrl("");
+        setParsedGitHub(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to create source");
       }
@@ -121,22 +136,38 @@ export default function AddSourceForm() {
       {/* Dynamic config fields */}
       <div style={{ marginTop: 12 }}>
         {method === "github_json" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={fieldStyle}>
-              <label style={labelStyle}>Repo (owner/name)</label>
+              <label style={labelStyle}>GitHub File URL</label>
               <input
-                name="config_repo"
+                name="config_github_url"
                 required
-                placeholder="outages/cloudflare-outages"
+                value={githubUrl}
+                onChange={(e) => {
+                  const url = e.target.value;
+                  setGithubUrl(url);
+                  setParsedGitHub(parseGitHubUrl(url));
+                }}
+                placeholder="https://github.com/outages/cloudflare-outages/blob/main/cloudflare_outages.json"
                 style={inputStyle}
               />
+              {parsedGitHub ? (
+                <p style={{ fontSize: 10, color: "#555", fontFamily: "monospace", margin: "5px 0 0", letterSpacing: "0.04em" }}>
+                  repo: <span style={{ color: "#FF000F" }}>{parsedGitHub.repo}</span>
+                  {" · "}branch: <span style={{ color: "#FF000F" }}>{parsedGitHub.branch}</span>
+                  {" · "}file: <span style={{ color: "#FF000F" }}>{parsedGitHub.file}</span>
+                </p>
+              ) : githubUrl.length > 10 ? (
+                <p style={{ fontSize: 10, color: "#FF000F", fontFamily: "monospace", margin: "5px 0 0" }}>
+                  Could not parse — expected: github.com/owner/repo/blob/branch/file
+                </p>
+              ) : null}
             </div>
             <div style={fieldStyle}>
-              <label style={labelStyle}>File path</label>
+              <label style={labelStyle}>Sync since (optional)</label>
               <input
-                name="config_file"
-                required
-                placeholder="cloudflare_outages.json"
+                name="config_since_date"
+                placeholder="2022-01-01  (leave blank for last 90 days)"
                 style={inputStyle}
               />
             </div>

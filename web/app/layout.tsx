@@ -29,6 +29,7 @@ export default function RootLayout({
       <body
         className="antialiased"
         style={{ fontFamily: "'Inter Variable', Inter, system-ui, sans-serif" }}
+        suppressHydrationWarning
       >
         {children}
       </body>

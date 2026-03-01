@@ -23,7 +23,8 @@
       "Bash(psql:*)",
       "Bash(pkill:*)",
       "Bash(xargs cat:*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
