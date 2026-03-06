@@ -23,8 +23,7 @@ async def get_queue(x_admin_secret: str = Header(...)):
         result = await db.table("postmortems").select("*").eq("status", "pending").order("created_at", desc=True).execute()
         return result.data
     except Exception as e:
-        import traceback
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.patch("/{id}/publish")

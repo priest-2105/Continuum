@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_key: str
     groq_api_key: str = ""
-    admin_secret: str = "change-me"
+    admin_secret: str
 
     class Config:
         env_file = ".env"

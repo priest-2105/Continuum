@@ -12,6 +12,7 @@ async function getQueue(): Promise<Postmortem[]> {
     const res = await fetch(`${API_URL}/admin/queue`, {
       headers: { "x-admin-secret": ADMIN_SECRET },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     return res.ok ? res.json() : [];
   } catch {

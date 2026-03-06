@@ -8,13 +8,15 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 async function getStats() {
   try {
     const [published, pending] = await Promise.all([
-      fetch(`${API_URL}/postmortems?status=published&limit=100`, {
+      fetch(`${API_URL}/postmortems?limit=100`, {
         headers: { "x-admin-secret": ADMIN_SECRET },
         cache: "no-store",
-      }).then((r) => (r.ok ? r.json() : [])),
+        signal: AbortSignal.timeout(8000),
+      }).then((r) => (r.ok ? r.json() : { data: [], total: 0 })).then((j) => j.data ?? j),
       fetch(`${API_URL}/admin/queue`, {
         headers: { "x-admin-secret": ADMIN_SECRET },
         cache: "no-store",
+        signal: AbortSignal.timeout(8000),
       }).then((r) => (r.ok ? r.json() : [])),
     ]);
     return { published, pending };

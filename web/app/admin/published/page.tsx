@@ -9,8 +9,9 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
 async function getPublished(): Promise<Postmortem[]> {
   try {
-    const res = await fetch(`${API_URL}/postmortems/?status=published&limit=100`, {
+    const res = await fetch(`${API_URL}/postmortems/?limit=100`, {
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const json = await res.json();

@@ -10,7 +10,6 @@ _ALLOWED_SORT = {"published_at", "company", "created_at"}
 async def list_postmortems(
     company: str | None = None,
     severity: str | None = None,
-    status: str = "published",
     sort_by: str = "published_at",
     sort_dir: str = "desc",
     limit: int = Query(default=20, le=100),
@@ -20,7 +19,7 @@ async def list_postmortems(
         sort_by = "published_at"
 
     db = await get_client()
-    query = db.table("postmortems").select("*", count="exact").eq("status", status)
+    query = db.table("postmortems").select("*", count="exact").eq("status", "published")
     if company:
         query = query.eq("company", company)
     if severity:

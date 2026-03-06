@@ -24,6 +24,7 @@ async function getSources(): Promise<Source[]> {
     const res = await fetch(`${API_URL}/admin/sources`, {
       headers: { "x-admin-secret": ADMIN_SECRET },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
     return res.ok ? res.json() : [];
   } catch {
