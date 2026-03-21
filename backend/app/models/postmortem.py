@@ -8,6 +8,7 @@ class Postmortem(BaseModel):
     company: str
     title: str
     url: str
+    source_url: Optional[str] = None
     published_at: Optional[datetime] = None
     severity: Optional[str] = None
     affected_services: Optional[list[str]] = []

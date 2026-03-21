@@ -63,32 +63,16 @@ export async function bulkReject(ids: string[]) {
 
 export async function createSource(formData: FormData) {
   await assertAdmin();
-  const method = formData.get("method") as string;
-  const config: Record<string, string> = {};
-  if (method === "github_json") {
-    const githubUrl = (formData.get("config_github_url") as string) ?? "";
-    const m = githubUrl.match(/github\.com\/([^/]+\/[^/]+)\/blob\/([^/]+)\/(.+)/);
-    if (!m) throw new Error("Invalid GitHub file URL");
-    config.repo   = m[1];
-    config.branch = m[2];
-    config.file   = m[3];
-    const sinceDate = ((formData.get("config_since_date") as string) ?? "").trim();
-    if (sinceDate) config.since_date = sinceDate.includes("T") ? sinceDate : sinceDate + "T00:00:00Z";
-  } else if (method === "rss") {
-    config.feed_url = formData.get("config_feed_url") as string;
-  } else if (method === "scrape") {
-    config.url = formData.get("config_url") as string;
-    config.selector = formData.get("config_selector") as string;
-  } else if (method === "statuspage_api") {
-    config.statuspage_url = formData.get("config_statuspage_url") as string;
-  }
+  const config: Record<string, string> = {
+    statuspage_url: formData.get("config_statuspage_url") as string,
+  };
   const res = await fetch(`${API_URL}/admin/sources`, {
     method: "POST",
     headers: { "x-admin-secret": ADMIN_SECRET, "Content-Type": "application/json" },
     body: JSON.stringify({
       company: formData.get("company"),
       slug: formData.get("slug"),
-      method,
+      method: "statuspage_api",
       config,
       active: true,
     }),

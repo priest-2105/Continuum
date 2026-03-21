@@ -1,4 +1,3 @@
-import asyncio
 import json as json_lib
 from datetime import datetime, timezone
 from typing import AsyncGenerator
@@ -29,60 +28,9 @@ def require_admin(x_admin_secret: str):
 class SourceCreate(BaseModel):
     company: str
     slug: str
-    method: str = "github_json"
+    method: str = "statuspage_api"
     config: dict = {}
     active: bool = True
-
-
-def _parse_next_link(link_header: str) -> str | None:
-    """Extract the 'next' URL from a GitHub Link header."""
-    for part in link_header.split(","):
-        segments = part.strip().split(";")
-        if len(segments) == 2 and segments[1].strip() == 'rel="next"':
-            return segments[0].strip().strip("<>")
-    return None
-
-
-def _github_headers() -> dict:
-    h = {"Accept": "application/vnd.github+json"}
-    token = getattr(settings, "github_token", None)
-    if token:
-        h["Authorization"] = f"Bearer {token}"
-    return h
-
-
-def _parse_statuspage(raw: str) -> dict | None:
-    """Return parsed dict if raw looks like a Statuspage JSON snapshot, else None."""
-    try:
-        d = json_lib.loads(raw)
-        if "status" in d and "indicator" in d["status"]:
-            return d
-    except Exception:
-        pass
-    return None
-
-
-async def _fetch_file_at_sha(
-    client: httpx.AsyncClient,
-    repo: str,
-    file: str,
-    sha: str,
-    headers: dict,
-    semaphore: asyncio.Semaphore,
-) -> str | None:
-    """Fetch raw file content at a specific commit SHA via raw.githubusercontent.com (no 1MB limit)."""
-    async with semaphore:
-        try:
-            r = await client.get(
-                f"https://raw.githubusercontent.com/{repo}/{sha}/{file}",
-                headers={"Authorization": headers.get("Authorization", "")} if "Authorization" in headers else {},
-                timeout=20,
-            )
-            if r.status_code != 200:
-                return None
-            return r.text
-        except Exception:
-            return None
 
 
 @router.get("")
@@ -113,178 +61,6 @@ async def delete_source(id: str, x_admin_secret: str = Header(...)):
     db = await get_client()
     await db.table("sources").delete().eq("id", id).execute()
     return {"deleted": id}
-
-
-async def _sync_github_json(source: dict, db) -> AsyncGenerator[dict, None]:
-    config  = source.get("config") or {}
-    repo    = config.get("repo", "")
-    file    = config.get("file", "")
-    branch  = config.get("branch", "main")
-    if not repo or not file:
-        yield {"type": "error", "message": "github_json source requires config.repo and config.file"}
-        return
-
-    slug    = source["slug"]
-    company = source["company"]
-    headers = _github_headers()
-
-    # Companion summary file: cloudflare_outages.json → cloudflare_summary.json
-    summary_file = file.replace("_outages.json", "_summary.json") if "_outages.json" in file else None
-
-    last_synced = source.get("last_synced_at")
-    since = last_synced or config.get("since_date", "2022-01-01T00:00:00Z")
-
-    yield {"type": "start", "message": f"Finding commits since {since[:10]}..."}
-
-    # ── 1. Paginate through ALL commits since `since` ─────────────────────────
-    all_commits: list[dict] = []
-    next_url: str | None = f"https://api.github.com/repos/{repo}/commits"
-    page_params: dict = {"path": file, "per_page": 100, "sha": branch, "since": since}
-
-    async with httpx.AsyncClient() as client:
-        while next_url:
-            resp = await client.get(next_url, params=page_params, headers=headers, timeout=30)
-            if resp.status_code != 200:
-                yield {"type": "error", "message": f"GitHub API error {resp.status_code}: {resp.text[:200]}"}
-                return
-            page = resp.json()
-            if not page:
-                break
-            all_commits.extend(page)
-            page_params = {}  # next_url already has query params
-            next_url = _parse_next_link(resp.headers.get("link", ""))
-            yield {"type": "commits_page", "total": len(all_commits)}
-
-        if not all_commits:
-            yield {"type": "done", "created": 0, "message": "No new commits found"}
-            return
-
-        # ── 2. Sample commits ──────────────────────────────────────────────────
-        step = max(1, len(all_commits) // 500)
-        commits_to_process = all_commits[::step] if summary_file else all_commits
-        total_to_fetch = len(commits_to_process)
-
-        if summary_file:
-            yield {
-                "type": "commits_done",
-                "total": len(all_commits),
-                "sampling": total_to_fetch,
-                "step": step,
-                "message": f"Found {len(all_commits)} commits → sampling {total_to_fetch} snapshots",
-            }
-        else:
-            yield {
-                "type": "commits_done",
-                "total": len(all_commits),
-                "sampling": total_to_fetch,
-                "step": 1,
-                "message": f"Found {len(all_commits)} commits to process",
-            }
-
-        # ── 3. Fetch snapshots in batches so we can stream progress ────────────
-        semaphore  = asyncio.Semaphore(5)
-        batch_size = 25
-        raw_summaries: list[str | None] = []
-        raw_outages:   list[str | None] = []
-
-        if summary_file:
-            for i in range(0, total_to_fetch, batch_size):
-                batch = commits_to_process[i : i + batch_size]
-                results = await asyncio.gather(*[
-                    _fetch_file_at_sha(client, repo, summary_file, c["sha"], headers, semaphore)
-                    for c in batch
-                ])
-                raw_summaries.extend(results)
-                yield {"type": "fetching", "done": min(i + batch_size, total_to_fetch), "total": total_to_fetch}
-            raw_outages = [None] * total_to_fetch
-        else:
-            for i in range(0, total_to_fetch, batch_size):
-                batch = commits_to_process[i : i + batch_size]
-                results = await asyncio.gather(*[
-                    _fetch_file_at_sha(client, repo, file, c["sha"], headers, semaphore)
-                    for c in batch
-                ])
-                raw_outages.extend(results)
-                yield {"type": "fetching", "done": min(i + batch_size, total_to_fetch), "total": total_to_fetch}
-            raw_summaries = [None] * total_to_fetch
-
-    # ── 4. Parse and insert ───────────────────────────────────────────────────
-    created = 0
-    seen_incident_ids: set[str] = set()
-
-    for commit, raw_outage, raw_summary in zip(commits_to_process, raw_outages, raw_summaries):
-        sha = commit["sha"]
-
-        # Priority: named incidents from summary file
-        if raw_summary:
-            try:
-                summary = json_lib.loads(raw_summary)
-                for incident in summary.get("incidents", []):
-                    impact = incident.get("impact", "none")
-                    if impact in ("none", "maintenance"):
-                        continue
-                    inc_id = incident.get("id", "")
-                    if not inc_id or inc_id in seen_incident_ids:
-                        continue
-                    seen_incident_ids.add(inc_id)
-
-                    entry_id     = f"{slug}-{inc_id[:12]}"
-                    title        = incident.get("name") or f"{company}: Incident"
-                    shortlink    = incident.get("shortlink") or f"https://github.com/{repo}/blob/{sha}/{summary_file}"
-                    published_at = incident.get("created_at") or commit["commit"]["author"]["date"]
-                    severity     = _SEVERITY_MAP.get(impact, "medium")
-
-                    existing = await db.table("postmortems").select("id").eq("id", entry_id).execute()
-                    if not existing.data:
-                        await db.table("postmortems").insert({
-                            "id": entry_id, "title": title, "company": company,
-                            "url": shortlink, "published_at": published_at,
-                            "severity": severity,
-                            "tags": ["github", "outage", slug, impact],
-                            "status": "pending",
-                        }).execute()
-                        created += 1
-                        yield {"type": "incident", "title": title, "id": entry_id, "severity": severity}
-                continue  # skip outage fallback for this commit
-            except Exception:
-                pass
-
-        # Fallback: outage snapshot
-        entry_id = f"{slug}-{sha[:12]}"
-        parsed   = _parse_statuspage(raw_outage) if raw_outage else None
-
-        if parsed:
-            indicator   = parsed["status"]["indicator"]
-            if indicator == "none":
-                continue
-            description = parsed["status"].get("description", "Service Disruption")
-            page_name   = parsed.get("page", {}).get("name", company)
-            updated_at  = parsed.get("page", {}).get("updated_at") or commit["commit"]["author"]["date"]
-            severity    = _SEVERITY_MAP.get(indicator, "medium")
-            title       = f"{page_name}: {description}"
-            url         = f"https://github.com/{repo}/blob/{sha}/{file}"
-            tags        = ["github", "outage", slug, indicator]
-        else:
-            message = commit["commit"]["message"].split("\n")[0]
-            if not message:
-                continue
-            title      = message
-            url        = commit["html_url"]
-            updated_at = commit["commit"]["author"]["date"]
-            severity   = None
-            tags       = ["github", "outage", slug]
-
-        existing = await db.table("postmortems").select("id").eq("id", entry_id).execute()
-        if not existing.data:
-            await db.table("postmortems").insert({
-                "id": entry_id, "title": title, "company": company,
-                "url": url, "published_at": updated_at,
-                "severity": severity, "tags": tags, "status": "pending",
-            }).execute()
-            created += 1
-            yield {"type": "incident", "title": title, "id": entry_id, "severity": severity}
-
-    yield {"type": "done", "created": created}
 
 
 async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
@@ -323,23 +99,58 @@ async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
             yield {"type": "error", "message": f"Non-JSON response from {page_url}/api/v2/incidents.json — check the URL"}
             return
 
-    incidents = data.get("incidents", [])
+    # Paginate through all incidents (100 per page, newest first)
+    # Stop early once we've passed last_synced_at (incremental runs)
+    all_incidents: list[dict] = []
+    page = 1
+    per_page = 100
+    stop_early = False
+
+    async with httpx.AsyncClient(follow_redirects=True) as paginator:
+        while True:
+            try:
+                r = await paginator.get(
+                    f"{page_url}/api/v2/incidents.json",
+                    params={"page": page, "per_page": per_page},
+                    headers={"Accept": "application/json"},
+                    timeout=15,
+                )
+            except httpx.RequestError as e:
+                yield {"type": "error", "message": f"Pagination request failed: {e}"}
+                return
+
+            if r.status_code != 200:
+                yield {"type": "error", "message": f"Statuspage API error {r.status_code} on page {page}"}
+                return
+
+            batch = r.json().get("incidents", [])
+            if not batch:
+                break
+
+            for inc in batch:
+                created_at = inc.get("created_at", "")
+                if last_synced and created_at and created_at <= last_synced:
+                    stop_early = True
+                    break
+                all_incidents.append(inc)
+
+            if stop_early or len(batch) < per_page:
+                break
+
+            page += 1
+
     yield {
         "type": "commits_done",
-        "total": len(incidents),
-        "sampling": len(incidents),
+        "total": len(all_incidents),
+        "sampling": len(all_incidents),
         "step": 1,
-        "message": f"Found {len(incidents)} incidents",
+        "message": f"Found {len(all_incidents)} incidents across {page} page(s)",
     }
 
     created = 0
-    for incident in incidents:
+    for incident in all_incidents:
         impact = incident.get("impact", "none")
         if impact in ("none", "maintenance"):
-            continue
-
-        created_at = incident.get("created_at", "")
-        if last_synced and created_at and created_at <= last_synced:
             continue
 
         incident_id = incident.get("id", "")
@@ -350,18 +161,25 @@ async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
         title     = incident.get("name") or f"{company}: Service Disruption"
         severity  = _SEVERITY_MAP.get(impact, "medium")
         shortlink = incident.get("shortlink") or f"{page_url}/incidents/{incident_id}"
+        created_at = incident.get("created_at", "")
+        affected  = [
+            c.get("name", "") for c in incident.get("components", [])
+            if c.get("name")
+        ]
 
         existing = await db.table("postmortems").select("id").eq("id", entry_id).execute()
         if not existing.data:
             await db.table("postmortems").insert({
-                "id":           entry_id,
-                "title":        title,
-                "company":      company,
-                "url":          shortlink,
-                "published_at": created_at,
-                "severity":     severity,
-                "tags":         ["statuspage", "outage", slug, impact],
-                "status":       "pending",
+                "id":                entry_id,
+                "title":             title,
+                "company":           company,
+                "url":               shortlink,
+                "source_url":        page_url,
+                "published_at":      created_at,
+                "severity":          severity,
+                "affected_services": affected,
+                "tags":              ["statuspage", slug, impact],
+                "status":            "published",
             }).execute()
             created += 1
             yield {"type": "incident", "title": title, "id": entry_id, "severity": severity}
@@ -379,17 +197,9 @@ async def sync_source(id: str, x_admin_secret: str = Header(...)):
         raise HTTPException(status_code=404, detail="Source not found")
     source = src_result.data[0]
 
-    method = source["method"]
-
     async def generate():
         try:
-            if method == "github_json":
-                gen = _sync_github_json(source, db)
-            elif method == "statuspage_api":
-                gen = _sync_statuspage_api(source, db)
-            else:
-                yield f"data: {json_lib.dumps({'type': 'done', 'created': 0, 'message': f'sync not implemented for {method}'})}\n\n"
-                return
+            gen = _sync_statuspage_api(source, db)
 
             completed = False
             async for event in gen:

@@ -134,18 +134,38 @@ export default async function PostmortemDetailPage({ params }: Props) {
                 fontSize: 15,
                 color: "#333",
                 lineHeight: 1.7,
-                marginBottom: 28,
+                marginBottom: 8,
               }}
             >
-              This postmortem is published on{" "}
+              This incident is recorded on{" "}
               <strong style={{ color: "#000" }}>
                 {post.company.charAt(0).toUpperCase() + post.company.slice(1)}
                 &apos;s
               </strong>{" "}
-              engineering blog. The full incident report — including timelines,
-              contributing factors, and action items — is available at the
-              original source.
+              public status page. The full incident history — including impact updates,
+              affected components, and resolution — is available at the original source.
             </p>
+            {post.source_url && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#888",
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  marginBottom: 24,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                Status page:{" "}
+                <a
+                  href={post.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#555", textDecoration: "underline" }}
+                >
+                  {post.source_url}
+                </a>
+              </p>
+            )}
             <a
               href={post.url}
               target="_blank"
@@ -164,7 +184,7 @@ export default async function PostmortemDetailPage({ params }: Props) {
                 textDecoration: "none",
               }}
             >
-              View original post ↗
+              View incident page ↗
             </a>
           </div>
 
@@ -184,7 +204,10 @@ export default async function PostmortemDetailPage({ params }: Props) {
             {post.tags.length > 0 && (
               <MetaRow label="Tags" value={post.tags.map((t) => `#${t}`).join("  ")} mono />
             )}
-            <MetaRow label="Source URL" value={post.url} mono truncate />
+            {post.source_url && (
+              <MetaRow label="Status Page" value={post.source_url} mono truncate />
+            )}
+            <MetaRow label="Incident URL" value={post.url} mono truncate />
           </div>
         </main>
 

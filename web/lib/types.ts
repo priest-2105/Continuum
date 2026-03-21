@@ -6,6 +6,7 @@ export interface Postmortem {
   company: string;
   title: string;
   url: string;
+  source_url: string | null;
   published_at: string | null;
   severity: Severity | null;
   affected_services: string[];

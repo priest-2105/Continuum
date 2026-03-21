@@ -152,13 +152,7 @@ export default function SyncButton({ sourceId }: { sourceId: string }) {
           {/* Stats row */}
           {(stats.commits > 0 || stats.created > 0) && (
             <div style={{ display: "flex", gap: 16, marginBottom: 8, color: "#555", fontSize: 10 }}>
-              {stats.commits > 0 && <span>{stats.commits} commits</span>}
-              {stats.sampling > 0 && stats.sampling !== stats.commits && (
-                <span>→ {stats.sampling} sampled</span>
-              )}
-              {stats.sampling > 0 && stats.fetched > 0 && (
-                <span>{stats.fetched}/{stats.sampling} fetched</span>
-              )}
+              {stats.commits > 0 && <span>{stats.commits} incidents</span>}
               <span style={{ color: "#FF000F", marginLeft: "auto" }}>
                 {stats.created} new
               </span>

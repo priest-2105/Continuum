@@ -7,6 +7,8 @@ venv/
 .env
 *.egg-info/
 
+statusapidoc.md
+
 # Node
 node_modules/
 .next/

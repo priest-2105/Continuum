@@ -3,13 +3,6 @@
 import { useState, useTransition } from "react";
 import { createSource } from "../actions";
 
-const METHODS = [
-  { value: "github_json", label: "GitHub JSON" },
-  { value: "rss", label: "RSS Feed" },
-  { value: "scrape", label: "Web Scrape" },
-  { value: "statuspage_api", label: "Statuspage API" },
-];
-
 function slugify(s: string) {
   return s
     .toLowerCase()
@@ -18,26 +11,12 @@ function slugify(s: string) {
     .replace(/^-|-$/g, "");
 }
 
-interface ParsedGitHub {
-  repo: string;
-  branch: string;
-  file: string;
-}
-
-function parseGitHubUrl(url: string): ParsedGitHub | null {
-  const m = url.match(/github\.com\/([^/]+\/[^/]+)\/blob\/([^/]+)\/(.+)/);
-  return m ? { repo: m[1], branch: m[2], file: m[3] } : null;
-}
-
 export default function AddSourceForm() {
-  const [method, setMethod] = useState("github_json");
   const [company, setCompany] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [parsedGitHub, setParsedGitHub] = useState<ParsedGitHub | null>(null);
 
   function handleCompanyChange(val: string) {
     setCompany(val);
@@ -55,9 +34,6 @@ export default function AddSourceForm() {
         setCompany("");
         setSlug("");
         setSlugTouched(false);
-        setMethod("github_json");
-        setGithubUrl("");
-        setParsedGitHub(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to create source");
       }
@@ -90,7 +66,9 @@ export default function AddSourceForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+      <input type="hidden" name="method" value="statuspage_api" />
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         {/* Company */}
         <div style={fieldStyle}>
           <label style={labelStyle}>Company</label>
@@ -99,7 +77,7 @@ export default function AddSourceForm() {
             required
             value={company}
             onChange={(e) => handleCompanyChange(e.target.value)}
-            placeholder="Cloudflare"
+            placeholder="Atlassian"
             style={inputStyle}
           />
         </div>
@@ -112,114 +90,24 @@ export default function AddSourceForm() {
             required
             value={slug}
             onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }}
-            placeholder="cloudflare"
+            placeholder="atlassian"
             style={inputStyle}
           />
         </div>
-
-        {/* Method */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Method</label>
-          <select
-            name="method"
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-            style={{ ...inputStyle, cursor: "pointer" }}
-          >
-            {METHODS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      {/* Dynamic config fields */}
-      <div style={{ marginTop: 12 }}>
-        {method === "github_json" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>GitHub File URL</label>
-              <input
-                name="config_github_url"
-                required
-                value={githubUrl}
-                onChange={(e) => {
-                  const url = e.target.value;
-                  setGithubUrl(url);
-                  setParsedGitHub(parseGitHubUrl(url));
-                }}
-                placeholder="https://github.com/outages/cloudflare-outages/blob/main/cloudflare_outages.json"
-                style={inputStyle}
-              />
-              {parsedGitHub ? (
-                <p style={{ fontSize: 10, color: "#555", fontFamily: "monospace", margin: "5px 0 0", letterSpacing: "0.04em" }}>
-                  repo: <span style={{ color: "#FF000F" }}>{parsedGitHub.repo}</span>
-                  {" · "}branch: <span style={{ color: "#FF000F" }}>{parsedGitHub.branch}</span>
-                  {" · "}file: <span style={{ color: "#FF000F" }}>{parsedGitHub.file}</span>
-                </p>
-              ) : githubUrl.length > 10 ? (
-                <p style={{ fontSize: 10, color: "#FF000F", fontFamily: "monospace", margin: "5px 0 0" }}>
-                  Could not parse — expected: github.com/owner/repo/blob/branch/file
-                </p>
-              ) : null}
-            </div>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Sync since (optional)</label>
-              <input
-                name="config_since_date"
-                placeholder="2022-01-01  (leave blank for last 90 days)"
-                style={inputStyle}
-              />
-            </div>
-          </div>
-        )}
-
-        {method === "rss" && (
-          <div style={fieldStyle}>
-            <label style={labelStyle}>Feed URL</label>
-            <input
-              name="config_feed_url"
-              required
-              placeholder="https://example.com/feed.xml"
-              style={inputStyle}
-            />
-          </div>
-        )}
-
-        {method === "scrape" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>URL</label>
-              <input
-                name="config_url"
-                required
-                placeholder="https://example.com/incidents"
-                style={inputStyle}
-              />
-            </div>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>CSS Selector</label>
-              <input
-                name="config_selector"
-                required
-                placeholder=".incident-item"
-                style={inputStyle}
-              />
-            </div>
-          </div>
-        )}
-
-        {method === "statuspage_api" && (
-          <div style={fieldStyle}>
-            <label style={labelStyle}>Status Page URL</label>
-            <input
-              name="config_statuspage_url"
-              required
-              placeholder="https://status.example.com"
-              style={inputStyle}
-            />
-          </div>
-        )}
+      {/* Statuspage URL */}
+      <div style={fieldStyle}>
+        <label style={labelStyle}>Statuspage URL</label>
+        <input
+          name="config_statuspage_url"
+          required
+          placeholder="https://status.atlassian.com"
+          style={inputStyle}
+        />
+        <p style={{ fontSize: 10, color: "#333", fontFamily: "monospace", margin: "5px 0 0", letterSpacing: "0.04em" }}>
+          Must expose the Atlassian Statuspage API at <span style={{ color: "#555" }}>/api/v2/incidents.json</span>
+        </p>
       </div>
 
       {error && (
