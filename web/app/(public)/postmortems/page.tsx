@@ -97,7 +97,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             <CompanyFilter
               companies={companies}
               activeCompany={company}
-              buildUrl={(c) => buildUrl("/postmortems", { ...filterBase, company: c, page: undefined })}
+              baseParams={{ ...filterBase, page: undefined }}
             />
           </div>
 

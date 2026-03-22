@@ -8,10 +8,19 @@ const SHOW_LIMIT = 8;
 interface Props {
   companies: string[];
   activeCompany: string | undefined;
-  buildUrl: (company: string | undefined) => string;
+  baseParams: Record<string, string | undefined>;
 }
 
-export default function CompanyFilter({ companies, activeCompany, buildUrl }: Props) {
+function buildUrl(base: string, params: Record<string, string | undefined>) {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v) sp.set(k, v);
+  }
+  const qs = sp.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+export default function CompanyFilter({ companies, activeCompany, baseParams }: Props) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
 
@@ -49,7 +58,7 @@ export default function CompanyFilter({ companies, activeCompany, buildUrl }: Pr
         {!search && (
           <FilterLink
             label="All"
-            href={buildUrl(undefined)}
+            href={buildUrl("/postmortems", { ...baseParams, company: undefined })}
             active={!activeCompany}
           />
         )}
@@ -57,7 +66,7 @@ export default function CompanyFilter({ companies, activeCompany, buildUrl }: Pr
           <FilterLink
             key={c}
             label={c}
-            href={buildUrl(c)}
+            href={buildUrl("/postmortems", { ...baseParams, company: c })}
             active={activeCompany === c}
           />
         ))}
