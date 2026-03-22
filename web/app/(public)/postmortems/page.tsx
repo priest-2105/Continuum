@@ -1,5 +1,6 @@
 import PostmortemCard from "@/components/PostmortemCard";
 import EmptyState from "@/components/EmptyState";
+import CompanyFilter from "@/components/CompanyFilter";
 import { getPostmortems, getCompanies } from "@/lib/api";
 import Link from "next/link";
 
@@ -92,11 +93,12 @@ export default async function BrowsePage({ searchParams }: Props) {
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 10px", color: "#666" }}>
             Company
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 28 }}>
-            <FilterLink label="All" href={buildUrl("/postmortems", { ...filterBase, company: undefined, page: undefined })} active={!company} />
-            {companies.map((c) => (
-              <FilterLink key={c} label={c} href={buildUrl("/postmortems", { ...filterBase, company: c, page: undefined })} active={company === c} />
-            ))}
+          <div style={{ marginBottom: 28 }}>
+            <CompanyFilter
+              companies={companies}
+              activeCompany={company}
+              buildUrl={(c) => buildUrl("/postmortems", { ...filterBase, company: c, page: undefined })}
+            />
           </div>
 
           {/* Severity filter */}
