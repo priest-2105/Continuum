@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import CompanyBadge from "@/components/CompanyBadge";
 import SeverityBadge from "@/components/SeverityBadge";
+import AISummary from "@/components/AISummary";
 import { getPostmortem } from "@/lib/api";
 import type { Metadata } from "next";
 
@@ -234,30 +235,7 @@ export default async function PostmortemDetailPage({ params }: Props) {
             >
               AI Summary
             </p>
-            {post.ai_summary ? (
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "#333",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}
-              >
-                {post.ai_summary}
-              </p>
-            ) : (
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#aaa",
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  margin: 0,
-                  letterSpacing: "0.03em",
-                }}
-              >
-                Summary pending generation.
-              </p>
-            )}
+            <AISummary postId={post.id} cachedSummary={post.ai_summary ?? null} />
           </div>
 
           {/* Root cause category */}

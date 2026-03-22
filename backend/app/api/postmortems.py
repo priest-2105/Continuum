@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.db.supabase import get_client
+from app.services.gemini import generate_summary
 
 router = APIRouter(prefix="/postmortems", tags=["postmortems"])
 
@@ -39,3 +40,30 @@ async def get_postmortem(id: str):
     if not result.data:
         raise HTTPException(status_code=404, detail="Not found")
     return result.data
+
+
+@router.post("/{id}/summary")
+async def get_or_generate_summary(id: str):
+    db = await get_client()
+
+    try:
+        result = await db.table("postmortems").select("*").eq("id", id).single().execute()
+    except Exception:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    post = result.data
+    if not post:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    # Return cached summary if it exists
+    if post.get("ai_summary"):
+        return {"summary": post["ai_summary"], "cached": True}
+
+    try:
+        summary = await generate_summary(post)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AI generation failed: {e}")
+
+    await db.table("postmortems").update({"ai_summary": summary}).eq("id", id).execute()
+
+    return {"summary": summary, "cached": False}
