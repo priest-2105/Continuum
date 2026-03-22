@@ -78,27 +78,6 @@ async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
 
     yield {"type": "start", "message": f"Fetching incidents from {page_url}..."}
 
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        try:
-            resp = await client.get(
-                f"{page_url}/api/v2/incidents.json",
-                headers={"Accept": "application/json"},
-                timeout=15,
-            )
-        except httpx.RequestError as e:
-            yield {"type": "error", "message": f"Request failed: {e}"}
-            return
-
-        if resp.status_code != 200:
-            yield {"type": "error", "message": f"Statuspage API error {resp.status_code}: {resp.text[:300]}"}
-            return
-
-        try:
-            data = resp.json()
-        except Exception:
-            yield {"type": "error", "message": f"Non-JSON response from {page_url}/api/v2/incidents.json — check the URL"}
-            return
-
     # Paginate through all incidents (100 per page, newest first)
     # Stop early once we've passed last_synced_at (incremental runs)
     all_incidents: list[dict] = []
@@ -116,14 +95,18 @@ async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
                     timeout=15,
                 )
             except httpx.RequestError as e:
-                yield {"type": "error", "message": f"Pagination request failed: {e}"}
+                yield {"type": "error", "message": f"Request failed: {e}"}
                 return
 
             if r.status_code != 200:
-                yield {"type": "error", "message": f"Statuspage API error {r.status_code} on page {page}"}
+                yield {"type": "error", "message": f"Statuspage API error {r.status_code} on page {page}: {r.text[:300]}"}
                 return
 
-            batch = r.json().get("incidents", [])
+            try:
+                batch = r.json().get("incidents", [])
+            except Exception:
+                yield {"type": "error", "message": f"Non-JSON response from {page_url}/api/v2/incidents.json — check the URL"}
+                return
             if not batch:
                 break
 
@@ -157,29 +140,24 @@ async def _sync_statuspage_api(source: dict, db) -> AsyncGenerator[dict, None]:
         if not incident_id:
             continue
 
-        entry_id  = f"{slug}-{incident_id[:12]}"
-        title     = incident.get("name") or f"{company}: Service Disruption"
-        severity  = _SEVERITY_MAP.get(impact, "medium")
-        shortlink = incident.get("shortlink") or f"{page_url}/incidents/{incident_id}"
+        entry_id   = f"{slug}-{incident_id[:12]}"
+        title      = incident.get("name") or f"{company}: Service Disruption"
+        severity   = _SEVERITY_MAP.get(impact, "medium")
+        shortlink  = incident.get("shortlink") or f"{page_url}/incidents/{incident_id}"
         created_at = incident.get("created_at", "")
-        affected  = [
-            c.get("name", "") for c in incident.get("components", [])
-            if c.get("name")
-        ]
 
         existing = await db.table("postmortems").select("id").eq("id", entry_id).execute()
         if not existing.data:
             await db.table("postmortems").insert({
-                "id":                entry_id,
-                "title":             title,
-                "company":           company,
-                "url":               shortlink,
-                "source_url":        page_url,
-                "published_at":      created_at,
-                "severity":          severity,
-                "affected_services": affected,
-                "tags":              ["statuspage", slug, impact],
-                "status":            "published",
+                "id":           entry_id,
+                "title":        title,
+                "company":      company,
+                "url":          shortlink,
+                "source_url":   page_url,
+                "published_at": created_at,
+                "severity":     severity,
+                "tags":         ["statuspage", slug, impact],
+                "status":       "published",
             }).execute()
             created += 1
             yield {"type": "incident", "title": title, "id": entry_id, "severity": severity}

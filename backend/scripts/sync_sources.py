@@ -97,29 +97,24 @@ def sync_source(db, source: dict) -> int:
         if not incident_id:
             continue
 
-        entry_id  = f"{slug}-{incident_id[:12]}"
-        title     = incident.get("name") or f"{company}: Service Disruption"
-        severity  = _SEVERITY_MAP.get(impact, "medium")
-        shortlink = incident.get("shortlink") or f"{page_url}/incidents/{incident_id}"
+        entry_id   = f"{slug}-{incident_id[:12]}"
+        title      = incident.get("name") or f"{company}: Service Disruption"
+        severity   = _SEVERITY_MAP.get(impact, "medium")
+        shortlink  = incident.get("shortlink") or f"{page_url}/incidents/{incident_id}"
         created_at = incident.get("created_at", "")
-        affected  = [
-            c.get("name", "") for c in incident.get("components", [])
-            if c.get("name")
-        ]
 
         existing = db.table("postmortems").select("id").eq("id", entry_id).execute()
         if not existing.data:
             db.table("postmortems").insert({
-                "id":                entry_id,
-                "title":             title,
-                "company":           company,
-                "url":               shortlink,
-                "source_url":        page_url,
-                "published_at":      created_at,
-                "severity":          severity,
-                "affected_services": affected,
-                "tags":              ["statuspage", slug, impact],
-                "status":            "published",
+                "id":           entry_id,
+                "title":        title,
+                "company":      company,
+                "url":          shortlink,
+                "source_url":   page_url,
+                "published_at": created_at,
+                "severity":     severity,
+                "tags":         ["statuspage", slug, impact],
+                "status":       "published",
             }).execute()
             created += 1
             print(f"    + {title[:80]}")
