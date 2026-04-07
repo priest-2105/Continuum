@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.db.supabase import get_client
-from app.services.gemini import generate_summary
+from app.services.groq import generate_summary
 
 router = APIRouter(prefix="/postmortems", tags=["postmortems"])
 
@@ -61,8 +61,10 @@ async def get_or_generate_summary(id: str):
 
     try:
         summary = await generate_summary(post)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"AI generation failed: {e}")
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=502, detail="AI generation failed")
 
     await db.table("postmortems").update({"ai_summary": summary}).eq("id", id).execute()
 

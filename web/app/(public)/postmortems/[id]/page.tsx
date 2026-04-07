@@ -14,7 +14,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const post = await getPostmortem(id);
   if (!post) return { title: "Not Found — Continuum" };
-  return { title: `${post.title} — Continuum` };
+
+  const affected = (post.affected_services ?? []).slice(0, 3).join(", ");
+  const description = [
+    post.company.toUpperCase(),
+    post.severity ? `${post.severity} severity` : null,
+    affected ? `Affected: ${affected}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return {
+    title: post.title,
+    description,
+    openGraph: {
+      title: post.title,
+      description,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+    },
+  };
 }
 
 function formatDate(iso: string | null): string {
