@@ -53,7 +53,7 @@ export default async function PostmortemDetailPage({ params }: Props) {
       </div>
 
       {/* Header block */}
-      <div style={{ background: "#000", padding: "48px 24px" }}>
+      <div style={{ background: "#000", padding: "clamp(24px, 5vw, 48px) 24px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div
             style={{
@@ -97,14 +97,11 @@ export default async function PostmortemDetailPage({ params }: Props) {
 
       {/* Content area */}
       <div
+        className="detail-grid"
         style={{
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "48px 24px",
-          display: "grid",
-          gridTemplateColumns: "1fr 320px",
-          gap: 40,
-          alignItems: "flex-start",
+          padding: "clamp(24px, 4vw, 48px) clamp(16px, 4vw, 24px)",
         }}
       >
         {/* Main column */}
@@ -319,16 +316,7 @@ function MetaRow({
   truncate?: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "140px 1fr",
-        borderBottom: "1px solid #eee",
-        padding: "12px 16px",
-        gap: 16,
-        alignItems: "start",
-      }}
-    >
+    <div className="meta-row">
       <span
         style={{
           fontSize: 11,
